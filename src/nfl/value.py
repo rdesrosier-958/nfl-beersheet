@@ -2,12 +2,23 @@
 
 from __future__ import annotations
 
+import math
+from collections import Counter
 from dataclasses import dataclass, field
 
 from . import config
 from .records import Projection
 
 DEFAULT_BENCH_ALLOCATION = {"QB": 15, "RB": 25, "WR": 25, "TE": 8, "K": 2, "DST": 2}
+DRAFTABLE_POSITIONS = ("QB", "RB", "WR", "TE", "K", "DST")
+DEFAULT_FLOOR_PER_TEAM = {
+    "QB": 1.75,
+    "RB": 4.25,
+    "WR": 4.25,
+    "TE": 1.75,
+    "K": 1.25,
+    "DST": 1.25,
+}
 
 
 def bench_allocation() -> dict[str, int]:
@@ -153,9 +164,39 @@ def total_picks() -> int:
     return settings["teams"] * settings["draft_rounds"]
 
 
+def draftable_floors(board: Board) -> dict[str, int]:
+    """League-wide minimum names per position on the Draftable tab."""
+    teams = config.settings()["teams"]
+    per_team = config.model().get("draftable_floor_per_team", DEFAULT_FLOOR_PER_TEAM)
+    floors: dict[str, int] = {}
+    for position in DRAFTABLE_POSITIONS:
+        rate = per_team.get(position, 1.0)
+        floors[position] = math.ceil(teams * rate)
+    return floors
+
+
 def draftable(board: Board) -> list[Valued]:
     depth = int(round(total_picks() * config.model()["draft_cushion"]))
-    return board.players[:depth]
+    floors = draftable_floors(board)
+    chosen: dict[tuple[str, str], Valued] = {
+        (entry.name, entry.position): entry for entry in board.players[:depth]
+    }
+
+    counts = Counter(entry.position for entry in chosen.values())
+    for position, floor in floors.items():
+        missing = floor - counts.get(position, 0)
+        if missing <= 0:
+            continue
+        for entry in board.by_position(position):
+            key = (entry.name, entry.position)
+            if key in chosen:
+                continue
+            chosen[key] = entry
+            missing -= 1
+            if missing <= 0:
+                break
+
+    return sorted(chosen.values(), key=lambda entry: entry.value_rank)
 
 
 def snake_picks(slot: int) -> list[int]:

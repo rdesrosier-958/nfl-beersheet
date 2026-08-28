@@ -73,6 +73,13 @@ scoring:
 
 model:
   draft_cushion: 1.15
+  draftable_floor_per_team:
+    QB: 1.75
+    RB: 4.5
+    WR: 5.5
+    TE: 1.75
+    K: 1.25
+    DST: 1.25
   bench_allocation:
     QB: 18
     RB: 30
