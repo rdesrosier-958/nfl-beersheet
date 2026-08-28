@@ -303,8 +303,9 @@ def build(*, offline: bool = False) -> list[Projection]:
 
     _index_positional_ranks(registry)
     for player in registry.all():
-        if player.bye is None and player.team:
-            player.bye = bye_weeks.for_team(player.team)
+        team_bye = bye_weeks.for_team(player.team)
+        if team_bye is not None:
+            player.bye = team_bye
 
     projections: list[Projection] = []
     for player in registry.all():
