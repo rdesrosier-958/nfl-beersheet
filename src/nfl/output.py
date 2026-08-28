@@ -7,7 +7,7 @@ import datetime as dt
 
 import pandas as pd
 
-from . import config
+from . import config, draft_strategy
 from .value import Board, Valued, draftable, snake_picks
 
 COLUMNS = [
@@ -79,6 +79,11 @@ def write_excel(board: Board) -> list:
     frame = pd.DataFrame([_row(entry) for entry in board.players])
 
     with pd.ExcelWriter(path, engine="openpyxl") as writer:
+        strategy = pd.DataFrame(
+            draft_strategy.build_rows(board),
+            columns=["section", "detail"],
+        )
+        strategy.to_excel(writer, sheet_name="Draft Strategy", index=False, header=False)
         frame.to_excel(writer, sheet_name="Big Board", index=False)
         top = pd.DataFrame([_row(entry) for entry in draftable(board)])
         top.to_excel(writer, sheet_name="Draftable", index=False)

@@ -14,7 +14,7 @@ from pathlib import Path
 import gspread
 import pandas as pd
 
-from . import config, output
+from . import config, draft_strategy, output
 from .value import Board, draftable
 
 CREDENTIALS_ENV = "NFL_GOOGLE_CREDENTIALS"
@@ -135,12 +135,31 @@ def _cell(value):
     return value
 
 
+def _publish_strategy(book, existing: dict, requests: list[dict], board: Board) -> None:
+    title = "Draft Strategy"
+    rows = draft_strategy.build_rows(board)
+    sheet_rows, sheet_cols = max(len(rows), 2), 2
+
+    sheet = existing.get(title)
+    if sheet is None:
+        sheet = book.add_worksheet(title=title, rows=sheet_rows, cols=sheet_cols)
+        existing[title] = sheet
+    else:
+        sheet.clear()
+    if sheet.row_count < sheet_rows or sheet.col_count < sheet_cols:
+        sheet.resize(rows=max(sheet_rows, sheet.row_count), cols=max(sheet_cols, sheet.col_count))
+
+    sheet.update(values=rows, range_name="A1", value_input_option="USER_ENTERED")
+    requests.extend(_format_strategy(sheet.id, len(rows)))
+
+
 def publish(board: Board) -> str:
     book = _client().open_by_key(sheet_id())
     owners = read_owners(book)
     tabs = _frames(board)
     existing = {sheet.title: sheet for sheet in book.worksheets()}
     requests: list[dict] = []
+    _publish_strategy(book, existing, requests, board)
 
     for title, frame in tabs:
         rows, columns = len(frame) + 1, len(frame.columns)
@@ -167,11 +186,13 @@ def publish(board: Board) -> str:
         sheet.update(values=values, range_name="A1", value_input_option="USER_ENTERED")
         requests += _format(sheet.id, frame, drafted_tab=drafted_tab)
 
+    keep = {"Draft Strategy", *(name for name, _ in tabs)}
     for title, sheet in existing.items():
-        if title not in {name for name, _ in tabs}:
+        if title not in keep:
             requests.append({"deleteSheet": {"sheetId": sheet.id}})
 
-    requests += _reorder([existing[name].id for name, _ in tabs])
+    order = ["Draft Strategy", *(name for name, _ in tabs)]
+    requests += _reorder([existing[name].id for name in order if name in existing])
     book.batch_update({"requests": requests})
     return f"https://docs.google.com/spreadsheets/d/{book.id}/edit"
 
@@ -348,6 +369,40 @@ def _width(sheet_id_: int, index: int, pixels: int) -> dict:
         "properties": {"pixelSize": pixels},
         "fields": "pixelSize",
     }}
+
+
+def _format_strategy(sheet_id_: int, rows: int) -> list[dict]:
+    return [
+        {"repeatCell": {
+            "range": {
+                "sheetId": sheet_id_, "startRowIndex": 0, "endRowIndex": rows,
+                "startColumnIndex": 0, "endColumnIndex": 2,
+            },
+            "cell": {"userEnteredFormat": {"wrapStrategy": "WRAP", "verticalAlignment": "TOP"}},
+            "fields": "userEnteredFormat(wrapStrategy,verticalAlignment)",
+        }},
+        {"repeatCell": {
+            "range": {
+                "sheetId": sheet_id_, "startRowIndex": 0, "endRowIndex": 1,
+                "startColumnIndex": 0, "endColumnIndex": 2,
+            },
+            "cell": {"userEnteredFormat": {
+                "backgroundColor": HEADER_BG,
+                "textFormat": {"bold": True, "fontSize": 12, "foregroundColor": WHITE},
+            }},
+            "fields": "userEnteredFormat(textFormat,backgroundColor)",
+        }},
+        {"updateDimensionProperties": {
+            "range": {"sheetId": sheet_id_, "dimension": "COLUMNS", "startIndex": 0, "endIndex": 1},
+            "properties": {"pixelSize": 220},
+            "fields": "pixelSize",
+        }},
+        {"updateDimensionProperties": {
+            "range": {"sheetId": sheet_id_, "dimension": "COLUMNS", "startIndex": 1, "endIndex": 2},
+            "properties": {"pixelSize": 640},
+            "fields": "pixelSize",
+        }},
+    ]
 
 
 def _reorder(sheet_ids: list[int]) -> list[dict]:
