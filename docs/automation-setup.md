@@ -40,13 +40,14 @@ If Yahoo rankings changed, note that `data/manual/yahoo_top300.pdf` needs a refr
 
 ## Google Sheets (cloud only)
 
-The automation form does **not** hold secrets. Add on [Cursor → Cloud Agents → Secrets](https://cursor.com/dashboard?tab=cloud-agents):
+The automation form does **not** hold secrets. On [Cursor → Cloud Agents → Secrets](https://cursor.com/dashboard?tab=cloud-agents):
 
 | Secret name | Value |
 |-------------|--------|
-| `NFL_GOOGLE_CREDENTIALS_JSON` | Full contents of `config/service-account.json` |
+| `CFF_GOOGLE_CREDENTIALS_JSON` | Already set for cff-beersheet — **reuse this** (same service account) |
+| `NFL_SHEET_ID` | NFL sheet URL or id (`1Fc0uZPtLXMWA2zG94ijur2_uaCLCVpVYDFaWS-smvb0`) |
 
-`config/sheet_id.txt` is in the repo and does not need a secret.
+`NFL_GOOGLE_CREDENTIALS_JSON` also works if you prefer a separate name. `config/sheet_id.txt` is gitignored, so cloud runs need `NFL_SHEET_ID`.
 
 ## Local alternative (already installed)
 

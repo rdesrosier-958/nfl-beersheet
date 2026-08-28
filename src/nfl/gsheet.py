@@ -19,6 +19,9 @@ from .value import Board, draftable
 
 CREDENTIALS_ENV = "NFL_GOOGLE_CREDENTIALS"
 CREDENTIALS_JSON_ENV = "NFL_GOOGLE_CREDENTIALS_JSON"
+# Same service account as cff-beersheet; cloud automations may only have this set.
+SHARED_CREDENTIALS_ENV = "CFF_GOOGLE_CREDENTIALS"
+SHARED_CREDENTIALS_JSON_ENV = "CFF_GOOGLE_CREDENTIALS_JSON"
 SHEET_ENV = "NFL_SHEET_ID"
 DEFAULT_CREDENTIALS = config.CONFIG_DIR / "service-account.json"
 SHEET_ID_FILE = config.CONFIG_DIR / "sheet_id.txt"
@@ -41,23 +44,32 @@ class NotConfigured(RuntimeError):
 
 
 def credentials_path() -> Path:
-    raw = os.environ.get(CREDENTIALS_ENV)
+    raw = os.environ.get(CREDENTIALS_ENV) or os.environ.get(SHARED_CREDENTIALS_ENV)
     path = Path(raw).expanduser() if raw else DEFAULT_CREDENTIALS
     if not path.exists():
         raise NotConfigured(
             f"No service account key at {path}. Copy from cff-beersheet or set "
-            f"{CREDENTIALS_ENV} / {CREDENTIALS_JSON_ENV}. See README."
+            f"{CREDENTIALS_ENV}, {SHARED_CREDENTIALS_ENV}, {CREDENTIALS_JSON_ENV}, or "
+            f"{SHARED_CREDENTIALS_JSON_ENV}. See README."
         )
     return path
 
 
+def _credentials_json() -> str | None:
+    return os.environ.get(CREDENTIALS_JSON_ENV) or os.environ.get(
+        SHARED_CREDENTIALS_JSON_ENV
+    )
+
+
 def _client() -> gspread.Client:
-    inline = os.environ.get(CREDENTIALS_JSON_ENV)
+    inline = _credentials_json()
     if inline:
         try:
             return gspread.service_account_from_dict(json.loads(inline))
         except json.JSONDecodeError as error:
-            raise NotConfigured(f"{CREDENTIALS_JSON_ENV} is not valid JSON: {error}") from error
+            raise NotConfigured(
+                f"{CREDENTIALS_JSON_ENV} / {SHARED_CREDENTIALS_JSON_ENV} is not valid JSON: {error}"
+            ) from error
     return gspread.service_account(filename=str(credentials_path()))
 
 
@@ -81,7 +93,7 @@ def extract_id(raw: str) -> str:
 
 def configured() -> bool:
     try:
-        if not os.environ.get(CREDENTIALS_JSON_ENV):
+        if not _credentials_json():
             credentials_path()
         sheet_id()
     except NotConfigured:
