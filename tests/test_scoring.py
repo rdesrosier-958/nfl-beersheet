@@ -12,6 +12,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from nfl import config, scoring, teams  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def espn_half_ppr_league():
+    config.set_league("espn-half-ppr")
+    yield
+
+
 def test_config_files_parse():
     settings = config.settings()
     assert settings["teams"] == 10
@@ -40,6 +46,23 @@ def test_passing_touchdowns_and_interceptions():
     assert line.components["int"] == pytest.approx(-20.0)
 
 
+def test_full_ppr_reception_value():
+    config.set_league("yahoo-full-ppr")
+    line = scoring.score_offense(
+        {"rec": 80.0, "rec_yd": 1700.0, "rec_td": 6.0},
+        17,
+    )
+    assert line.components["rec"] == pytest.approx(80.0)
+    assert line.components["rec_bonus"] == pytest.approx(85.0)
+
+
+def test_yahoo_passing_touchdowns_and_interceptions():
+    config.set_league("yahoo-full-ppr")
+    line = scoring.score_offense({"pass_td": 30.0, "pass_int": 10.0}, 17)
+    assert line.components["pass_td"] == pytest.approx(180.0)
+    assert line.components["int"] == pytest.approx(-10.0)
+
+
 def test_dst_value_falls_as_points_allowed_rises():
     values = [
         scoring.score_defense(games=17, mean_points_allowed=pa).total
@@ -57,6 +80,18 @@ def test_kicker_distance_scoring():
         make_rates={"under40": 1.0, "fg40_49": 1.0, "fg50_plus": 1.0},
     )
     assert long_fg.total == pytest.approx(5.0)
+
+
+def test_yahoo_kicker_distance_scoring():
+    config.set_league("yahoo-full-ppr")
+    mid_fg = scoring.score_kicker(
+        games=1,
+        xp_made_per_game=0.0,
+        fg_attempts_per_game=1.0,
+        distance_mix={"under40": 0.0, "fg40_49": 1.0, "fg50_plus": 0.0},
+        make_rates={"under40": 1.0, "fg40_49": 1.0, "fg50_plus": 1.0},
+    )
+    assert mid_fg.total == pytest.approx(4.0)
 
 
 @pytest.mark.parametrize("raw,expected", [

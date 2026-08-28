@@ -1,4 +1,4 @@
-"""Convert projected stat lines into ESPN half-PPR fantasy points."""
+"""Convert projected stat lines into league fantasy points."""
 
 from __future__ import annotations
 
@@ -17,6 +17,17 @@ class ScoreBreakdown:
     components: dict[str, float] = field(default_factory=dict)
 
 
+def _yardage_bonus(yards: float, games: float, rule: dict[str, float]) -> float:
+    threshold = rule.get("bonus_at_yards")
+    bonus = rule.get("bonus_points", 0.0)
+    if not threshold or not bonus:
+        return 0.0
+    per_game = yards / max(games, 1.0)
+    if per_game >= threshold:
+        return bonus * games
+    return 0.0
+
+
 def score_offense(
     stats: dict[str, float],
     games: float,
@@ -31,12 +42,23 @@ def score_offense(
     comp["pass_yd"] = stats.get("pass_yd", 0.0) * s["passing"]["yards_per_point"]
     comp["pass_td"] = stats.get("pass_td", 0.0) * s["passing"]["td"]
     comp["int"] = stats.get("pass_int", 0.0) * s["passing"]["int"]
+    comp["pass_bonus"] = _yardage_bonus(stats.get("pass_yd", 0.0), games, s["passing"])
     comp["rush_yd"] = stats.get("rush_yd", 0.0) * s["rushing"]["yards_per_point"]
     comp["rush_td"] = stats.get("rush_td", 0.0) * s["rushing"]["td"]
+    comp["rush_bonus"] = _yardage_bonus(stats.get("rush_yd", 0.0), games, s["rushing"])
     comp["rec"] = stats.get("rec", 0.0) * s["receiving"]["reception"]
     comp["rec_yd"] = stats.get("rec_yd", 0.0) * s["receiving"]["yards_per_point"]
     comp["rec_td"] = stats.get("rec_td", 0.0) * s["receiving"]["td"]
+    comp["rec_bonus"] = _yardage_bonus(stats.get("rec_yd", 0.0), games, s["receiving"])
     comp["return_td"] = stats.get("return_td", 0.0) * s["returns"]["return_td"]
+
+    misc = s.get("misc", {})
+    if misc:
+        comp["fumble_lost"] = stats.get("fumble_lost", 0.0) * misc.get("fumble_lost", 0.0)
+        comp["two_pt"] = stats.get("two_pt", 0.0) * misc.get("two_pt", 0.0)
+        comp["off_fumble_return_td"] = (
+            stats.get("off_fumble_return_td", 0.0) * misc.get("off_fumble_return_td", 0.0)
+        )
 
     total = sum(comp.values())
     return ScoreBreakdown(total, total / games, comp)
@@ -96,6 +118,21 @@ def expected_points_allowed_points(mean_pa: float, cv: float = 0.55) -> float:
     return expected
 
 
+def _kicker_fg_values(k: dict) -> dict[str, float]:
+    buckets = k.get("fg_buckets")
+    if buckets:
+        return {
+            "under40": buckets["under40"],
+            "fg40_49": buckets["fg40_49"],
+            "fg50_plus": buckets["fg50_plus"],
+        }
+    return {
+        "under40": k["fg"],
+        "fg40_49": k["fg"] + k["fg_40_49_bonus"],
+        "fg50_plus": k["fg"] + k["fg_50_plus_bonus"],
+    }
+
+
 def score_kicker(
     *,
     games: float,
@@ -108,16 +145,12 @@ def score_kicker(
     k = config.scoring()["kicking"]
     comp = {"xp": xp_made_per_game * k["xp"] * games}
 
-    values = {
-        "under40": k["fg"],
-        "fg40_49": k["fg"] + k["fg_40_49_bonus"],
-        "fg50_plus": k["fg"] + k["fg_50_plus_bonus"],
-    }
+    values = _kicker_fg_values(k)
     for bucket, value in values.items():
         made = fg_attempts_per_game * distance_mix[bucket] * make_rates[bucket]
         comp[bucket] = made * value * games
 
-    comp["missed_fg"] = missed_fg_per_game * k["missed_fg"] * games
+    comp["missed_fg"] = missed_fg_per_game * k.get("missed_fg", 0.0) * games
     total = sum(comp.values())
     return ScoreBreakdown(total, total / max(games, 1.0), comp)
 

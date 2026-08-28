@@ -75,11 +75,18 @@ def _client() -> gspread.Client:
 
 def sheet_id() -> str:
     raw = os.environ.get(SHEET_ENV)
+    if not raw:
+        raw = config.settings().get("sheet_id") or config.settings().get("sheet_url")
+    if not raw:
+        profile_file = config.CONFIG_DIR / "sheets" / f"{config.active_profile()}.txt"
+        if profile_file.exists():
+            raw = profile_file.read_text().strip()
     if not raw and SHEET_ID_FILE.exists():
         raw = SHEET_ID_FILE.read_text().strip()
     if not raw:
         raise NotConfigured(
-            f"No sheet id. Write it to {SHEET_ID_FILE} or set {SHEET_ENV}."
+            f"No sheet id for profile {config.active_profile()!r}. Set league.sheet_id "
+            f"in config/leagues/, write {SHEET_ID_FILE}, or set {SHEET_ENV}."
         )
     return extract_id(raw)
 

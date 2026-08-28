@@ -31,11 +31,21 @@ Drop exports into `data/manual/` for Subvertadown reference and (optionally) Yah
 
 ## League settings
 
-Encoded in `config/league.yaml`:
+Each league profile lives in `config/leagues/`:
 
-- 10 teams, 13 rounds (9 starters + 4 bench)
-- 1 QB, 2 RB, 2 WR, 1 TE, 1 FLEX (RB/WR/TE), 1 D/ST, 1 K
-- 0.5 PPR, ESPN-standard yardage and D/ST scoring
+| Profile | League | Scoring |
+|---------|--------|---------|
+| `espn-half-ppr` | I'm so excited, I'm so scared! (10-team ESPN) | 0.5 PPR, 1 FLEX |
+| `yahoo-full-ppr` | Football for All of Us (12-team Yahoo) | Full PPR, 3 WR, no FLEX |
+
+Build a specific league:
+
+```bash
+./scripts/refresh.sh --league yahoo-full-ppr
+# or: NFL_LEAGUE=yahoo-full-ppr ./scripts/refresh.sh
+```
+
+Output lands in `output/<profile>/`.
 
 ## Output
 
@@ -80,7 +90,7 @@ Two layers:
 
 | Layer | What it does |
 |-------|----------------|
-| **Local schedule (8 AM)** | `scripts/install-daily-launchd.sh` — fetches ESPN/Rotoballer, rebuilds, publishes sheet |
+| **Local schedule (8 AM)** | `scripts/install-daily-launchd.sh` — fetches ESPN/Rotoballer, rebuilds, publishes **both** sheets |
 | **News + injuries** | Cursor Automation or manual run using `.cursor/skills/update-nfl-beersheet/SKILL.md` — scans r/fantasyfootball, edits `adjustments.csv`, rebuilds |
 
 Install the local daily job:

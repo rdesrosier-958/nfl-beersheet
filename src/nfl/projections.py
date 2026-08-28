@@ -16,7 +16,7 @@ STAT_COLUMNS = {
     "rec", "rec_yd", "rec_td", "return_td",
 }
 OFFENSE = {"QB", "RB", "WR", "TE"}
-CACHE = config.PROCESSED_DIR / "projections.pkl"
+CACHE = config.projections_cache()
 
 
 def _float(value: str | None, default: float = 0.0) -> float:

@@ -1,0 +1,98 @@
+# Yahoo league: Football for All of Us (ID 568769)
+# 12 teams, 15 draft rounds (no FLEX), full PPR, Yahoo default yardage bonuses.
+
+league:
+  profile: yahoo-full-ppr
+  name: "Football for All of Us"
+  yahoo_id: 568769
+  sheet_id: "1hcN9yjMwRzhgdT-pHYOhMTHYZRAfRVRAESQfOz_RigI"
+  teams: 12
+  draft_rounds: 15
+  season: 2026
+  season_start: "2026-09-07"
+  starters:
+    QB: 1
+    RB: 2
+    WR: 3
+    TE: 1
+    DST: 1
+    K: 1
+  flex: {}
+
+scoring:
+  passing:
+    yards_per_point: 0.04   # 25 yards per point
+    td: 6
+    int: -1
+    bonus_at_yards: 300
+    bonus_points: 5
+  rushing:
+    yards_per_point: 0.10
+    td: 6
+    bonus_at_yards: 100
+    bonus_points: 5
+  receiving:
+    reception: 1.0
+    yards_per_point: 0.10
+    td: 6
+    bonus_at_yards: 100
+    bonus_points: 5
+  misc:
+    fumble_lost: -2
+    two_pt: 2
+    off_fumble_return_td: 6
+  returns:
+    return_td: 6
+  kicking:
+    xp: 1
+    fg_buckets:
+      under40: 3
+      fg40_49: 4
+      fg50_plus: 5
+    missed_fg: 0
+  dst:
+    sack: 1
+    interception: 2
+    fumble_recovery: 2
+    int_return_td: 6
+    fumble_return_td: 6
+    block_kick: 2
+    safety: 2
+    xp_blocked: 2
+    points_allowed:
+      over_39_per_point: -1
+      over_39_mode: portion
+      bands:
+        - {max: 0, points: 10}
+        - {max: 6, points: 7}
+        - {max: 13, points: 4}
+        - {max: 20, points: 1}
+        - {max: 27, points: 0}
+        - {max: 34, points: -1}
+        - {max: 39, points: -4}
+
+model:
+  draft_cushion: 1.15
+  bench_allocation:
+    QB: 18
+    RB: 30
+    WR: 36
+    TE: 12
+    K: 3
+    DST: 3
+  tier_gap_points:
+    QB: 12
+    RB: 10
+    WR: 10
+    TE: 8
+    DST: 6
+    K: 4
+  volatility:
+    pass_yards: 0.35
+    rush_yards_qb: 0.55
+    rush_yards_rb: 0.50
+    rush_yards_wr: 0.65
+    rec_yards_wr: 0.55
+    rec_yards_rb: 0.60
+    rec_yards_te: 0.50
+    dst_points_allowed: 0.55

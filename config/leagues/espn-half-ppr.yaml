@@ -2,8 +2,10 @@
 # 10 teams, snake draft, 13 rounds, 0.5 PPR, standard ESPN yardage + D/ST + K.
 
 league:
+  profile: espn-half-ppr
   name: "I'm so excited, I'm so scared!"
   espn_id: 487681
+  sheet_id: "1Fc0uZPtLXMWA2zG94ijur2_uaCLCVpVYDFaWS-smvb0"
   teams: 10
   draft_rounds: 13
   season: 2026
@@ -61,8 +63,14 @@ scoring:
         - {max: 39, points: -4}
 
 model:
-  # How many extra names to show past total draft picks (reaches, handcuffs).
   draft_cushion: 1.15
+  bench_allocation:
+    QB: 15
+    RB: 25
+    WR: 25
+    TE: 8
+    K: 2
+    DST: 2
   tier_gap_points:
     QB: 12
     RB: 10

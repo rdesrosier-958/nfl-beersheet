@@ -8,7 +8,7 @@ Use this if the Automations editor opened empty or you are configuring by hand.
 
 ## Description
 
-Morning rebuild with r/fantasyfootball injury news; publishes the Google Sheet.
+Morning rebuild with r/fantasyfootball injury news; publishes **both** Google Sheets.
 
 ## Trigger
 
@@ -32,8 +32,8 @@ Hard requirements:
 1. Work on `main`. Pull latest before editing.
 2. Read r/fantasyfootball and NFL injury news since `data/processed/last_build.txt`.
 3. Edit `data/manual/adjustments.csv` when news should move a projection.
-4. Run `./scripts/refresh.sh` — must publish every tab to Google Sheets (log must show sheet URL).
-5. Report: players adjusted, top-20 changes, cache fallbacks, sheet URL.
+4. Run `./scripts/refresh_all.sh` — must publish both league tabs to Google Sheets (log must show two sheet URLs).
+5. Report: players adjusted, top-20 changes per league, cache fallbacks, both sheet URLs.
 
 If Yahoo rankings changed, note that `data/manual/yahoo_top300.pdf` needs a refresh.
 ```
@@ -45,9 +45,8 @@ The automation form does **not** hold secrets. On [Cursor → Cloud Agents → S
 | Secret name | Value |
 |-------------|--------|
 | `CFF_GOOGLE_CREDENTIALS_JSON` | Already set for cff-beersheet — **reuse this** (same service account) |
-| `NFL_SHEET_ID` | NFL sheet URL or id (`1Fc0uZPtLXMWA2zG94ijur2_uaCLCVpVYDFaWS-smvb0`) |
 
-`NFL_GOOGLE_CREDENTIALS_JSON` also works if you prefer a separate name. `config/sheet_id.txt` is gitignored, so cloud runs need `NFL_SHEET_ID`.
+Sheet ids are committed in `config/leagues/*.yaml` — no per-league secrets needed.
 
 ## Local alternative (already installed)
 

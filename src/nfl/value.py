@@ -7,8 +7,11 @@ from dataclasses import dataclass, field
 from . import config
 from .records import Projection
 
-# Rough bench depth beyond starters in a 10-team, 13-round draft.
-BENCH_ALLOCATION = {"QB": 15, "RB": 25, "WR": 25, "TE": 8, "K": 2, "DST": 2}
+DEFAULT_BENCH_ALLOCATION = {"QB": 15, "RB": 25, "WR": 25, "TE": 8, "K": 2, "DST": 2}
+
+
+def bench_allocation() -> dict[str, int]:
+    return config.model().get("bench_allocation", DEFAULT_BENCH_ALLOCATION)
 
 
 @dataclass
@@ -108,7 +111,7 @@ def build(projections: list[Projection]) -> Board:
     for position, pool in by_position.items():
         starters = demand.get(position, len(pool))
         vols_baseline[position] = _baseline(pool, starters)
-        beer_baseline[position] = _baseline(pool, starters + BENCH_ALLOCATION.get(position, 2))
+        beer_baseline[position] = _baseline(pool, starters + bench_allocation().get(position, 2))
 
     valued: list[Valued] = []
     for position, pool in by_position.items():

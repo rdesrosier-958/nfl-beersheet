@@ -1,24 +1,31 @@
 ---
 name: update-nfl-beersheet
-description: Refresh the NFL fantasy beer sheet for "I'm so excited, I'm so scared!" from ESPN projections, Rotoballer, Yahoo PDF, r/fantasyfootball injury news, then rebuild VBD rankings and publish to Google Sheets. Use when asked to update the NFL beer sheet, refresh fantasy rankings, check NFL injury news, or when running the daily rankings update for this project.
+description: Refresh NFL fantasy beer sheets (ESPN half-PPR and Yahoo full-PPR) from ESPN projections, Rotoballer, Yahoo PDF, r/fantasyfootball injury news, then rebuild VBD rankings and publish to Google Sheets. Use when asked to update the NFL beer sheet, refresh fantasy rankings, check NFL injury news, or when running the daily rankings update for this project.
 ---
 
-# Updating the NFL beer sheet
+# Updating the NFL beer sheets
 
 The pipeline fetches ESPN projections and ranking boards automatically. Your job
 in a daily pass is the part a script cannot do: read injury/news and decide
 whether anything should move a player in `data/manual/adjustments.csv`.
 
-League: **I'm so excited, I'm so scared!** (ESPN 487681) — 10 teams, 0.5 PPR,
-snake draft **Sep 8, 2026**.
+That file is **shared across leagues** — one news edit applies to both rescored
+boards on rebuild.
+
+## Leagues
+
+| Profile | League | Sheet |
+|---------|--------|-------|
+| `espn-half-ppr` | I'm so excited, I'm so scared! (ESPN 487681) | 10-team, 0.5 PPR, FLEX |
+| `yahoo-full-ppr` | Football for All of Us (Yahoo 568769) | 12-team, full PPR, 3 WR |
 
 ## Daily workflow
 
 ```
-- [ ] 1. Rebuild from live sources
+- [ ] 1. Rebuild from live sources (both leagues)
 - [ ] 2. Read the news since the last run
 - [ ] 3. Edit data/manual/adjustments.csv
-- [ ] 4. Rebuild and publish to Google Sheets
+- [ ] 4. Rebuild and publish both Google Sheets
 - [ ] 5. Report what changed
 ```
 
@@ -26,12 +33,12 @@ snake draft **Sep 8, 2026**.
 
 ```bash
 cd /Users/rdr/Developer/nfl-beersheet
-./scripts/refresh.sh
+./scripts/refresh_all.sh
 ```
 
-This fetches ESPN + Rotoballer, reads `data/manual/yahoo_top300.pdf`, rescores
-under half-PPR rules, and publishes to Google Sheets. If a source times out the
-build falls back to cache and prints a warning.
+This fetches ESPN + Rotoballer once per profile, reads `data/manual/yahoo_top300.pdf`,
+rescores under each league's rules, and publishes **both** Google Sheets. If a
+source times out the build falls back to cache and prints a warning.
 
 Check `data/processed/last_build.txt` for the previous run time.
 
@@ -82,18 +89,19 @@ Rules:
 ### 4. Rebuild and publish
 
 ```bash
-./scripts/refresh.sh
+./scripts/refresh_all.sh
 ```
 
-Confirm the log prints the Google Sheet URL. Requires
-`config/service-account.json` and `config/sheet_id.txt`.
+Confirm the log prints **both** Google Sheet URLs. Requires Google credentials
+(`config/service-account.json` locally, or `CFF_GOOGLE_CREDENTIALS_JSON` in cloud).
+Sheet ids are in `config/leagues/*.yaml`.
 
 ### 5. Report
 
 - Players adjusted and why (one line each).
 - Any change in the top 20 by value.
 - Sources that fell back to cache.
-- Whether the sheet published successfully.
+- Whether **both** sheets published successfully (espn-half-ppr and yahoo-full-ppr).
 
 If no news warranted changes, still rebuild when source data may have moved
 (ESPN/Rotoballer update daily).
@@ -116,6 +124,6 @@ export from the BeerSheet PDF. Not blended into VBD.
 
 ## What not to change
 
-- `config/league.yaml` — only if ESPN league rules actually change.
-- Do not inflate K/DST projections to "fix" value; the model reflects a
-  10-team 1-QB league correctly.
+- `config/leagues/*.yaml` — only if league rules change.
+- Do not inflate K/DST projections to "fix" value; the model reflects each
+  league's roster correctly.

@@ -4,11 +4,20 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import os
 
 from . import adjustments, config, gsheet, output, projections, value
 
 
+def _configure_league(profile: str | None) -> None:
+    if profile:
+        config.set_league(profile)
+    elif os.environ.get("NFL_LEAGUE"):
+        config.set_league(os.environ["NFL_LEAGUE"])
+
+
 def cmd_build(args: argparse.Namespace) -> int:
+    print(f"League profile: {config.active_profile()} ({config.settings().get('name', '')})")
     board_data = projections.build(offline=args.offline)
 
     log = adjustments.apply(board_data)
@@ -89,6 +98,11 @@ def cmd_init_sheet(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="nfl", description="NFL fantasy beer sheet builder")
+    parser.add_argument(
+        "--league",
+        default=None,
+        help="League profile name from config/leagues/ (default: espn-half-ppr)",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     build = sub.add_parser("build", help="ingest sources, rescore, and write the sheet")
@@ -107,4 +121,5 @@ def main(argv: list[str] | None = None) -> int:
     init_sheet.set_defaults(func=cmd_init_sheet)
 
     args = parser.parse_args(argv)
+    _configure_league(args.league)
     return args.func(args)

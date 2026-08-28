@@ -11,6 +11,6 @@ LOG="$LOG_DIR/daily-${STAMP}.log"
 
 {
   echo "=== nfl-beersheet daily refresh $(date -Iseconds) ==="
-  ./scripts/refresh.sh
+  ./scripts/refresh_all.sh
   echo "=== done ==="
 } 2>&1 | tee -a "$LOG"

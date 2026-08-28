@@ -56,7 +56,7 @@ def _row(entry: Valued) -> dict:
 
 def write_csv(board: Board) -> list:
     written = []
-    full = config.OUTPUT_DIR / "beersheet.csv"
+    full = config.output_dir() / "beersheet.csv"
     with full.open("w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=COLUMNS)
         writer.writeheader()
@@ -64,7 +64,7 @@ def write_csv(board: Board) -> list:
             writer.writerow(_row(entry))
     written.append(full)
 
-    top = config.OUTPUT_DIR / "beersheet_draftable.csv"
+    top = config.output_dir() / "beersheet_draftable.csv"
     with top.open("w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=COLUMNS)
         writer.writeheader()
@@ -75,7 +75,7 @@ def write_csv(board: Board) -> list:
 
 
 def write_excel(board: Board) -> list:
-    path = config.OUTPUT_DIR / "beersheet.xlsx"
+    path = config.output_dir() / "beersheet.xlsx"
     frame = pd.DataFrame([_row(entry) for entry in board.players])
 
     with pd.ExcelWriter(path, engine="openpyxl") as writer:
@@ -107,7 +107,7 @@ def takeaways(board: Board) -> list[str]:
 
 def write_all(board: Board) -> list:
     written = write_csv(board) + write_excel(board)
-    meta = config.OUTPUT_DIR / "build_meta.txt"
+    meta = config.output_dir() / "build_meta.txt"
     meta.write_text(dt.datetime.now().isoformat(timespec="seconds"))
     written.append(meta)
     return written
