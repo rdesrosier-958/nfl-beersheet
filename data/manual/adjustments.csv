@@ -1,0 +1,3 @@
+# player,position,adjust_pct,status,note,expires
+# Example: bump a player after camp news. status=OUT zeroes projection.
+# Christian McCaffrey,RB,-15,,"calf strain — monitor",2026-09-01

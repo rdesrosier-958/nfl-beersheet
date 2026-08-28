@@ -1,0 +1,81 @@
+# ESPN league: "I'm so excited, I'm so scared!" (ID 487681)
+# 10 teams, snake draft, 13 rounds, 0.5 PPR, standard ESPN yardage + D/ST + K.
+
+league:
+  name: "I'm so excited, I'm so scared!"
+  espn_id: 487681
+  teams: 10
+  draft_rounds: 13
+  season: 2026
+  season_start: "2026-09-07"
+  starters:
+    QB: 1
+    RB: 2
+    WR: 2
+    TE: 1
+    FLEX: 1
+    DST: 1
+    K: 1
+  flex:
+    FLEX: [RB, WR, TE]
+
+scoring:
+  passing:
+    yards_per_point: 0.04   # 1 pt / 25 yds
+    td: 4
+    int: -2
+  rushing:
+    yards_per_point: 0.10
+    td: 6
+  receiving:
+    reception: 0.5
+    yards_per_point: 0.10
+    td: 6
+  returns:
+    return_td: 6
+  kicking:
+    xp: 1
+    fg: 3
+    fg_40_49_bonus: 1
+    fg_50_plus_bonus: 2
+    missed_fg: -1
+  dst:
+    sack: 1
+    interception: 2
+    fumble_recovery: 2
+    int_return_td: 6
+    fumble_return_td: 6
+    block_kick: 2
+    safety: 2
+    xp_blocked: 2
+    points_allowed:
+      over_39_per_point: -1
+      over_39_mode: portion
+      bands:
+        - {max: 0, points: 10}
+        - {max: 6, points: 7}
+        - {max: 13, points: 4}
+        - {max: 20, points: 1}
+        - {max: 27, points: 0}
+        - {max: 34, points: -1}
+        - {max: 39, points: -4}
+
+model:
+  # How many extra names to show past total draft picks (reaches, handcuffs).
+  draft_cushion: 1.15
+  tier_gap_points:
+    QB: 12
+    RB: 10
+    WR: 10
+    TE: 8
+    DST: 6
+    K: 4
+  volatility:
+    pass_yards: 0.35
+    rush_yards_qb: 0.55
+    rush_yards_rb: 0.50
+    rush_yards_wr: 0.65
+    rec_yards_wr: 0.55
+    rec_yards_rb: 0.60
+    rec_yards_te: 0.50
+    dst_points_allowed: 0.55

@@ -1,0 +1,35 @@
+# Data sources for the NFL beer sheet.
+#
+# Stat projections drive VBD. Ranking boards supply market context (ADP / edge).
+# Subvertadown is reference-only — already VBD output for a similar league.
+
+sources:
+  - id: fantasypros
+    kind: projection_csv
+    path: data/manual/fantasypros_projections.csv
+    weight: 1.0
+    description: FantasyPros consensus stat line (manual export)
+
+  - id: espn
+    kind: ranking_csv
+    path: data/manual/espn_rankings.csv
+    weight: 1.0
+    description: ESPN top-300 rankings (manual export)
+
+  - id: yahoo
+    kind: ranking_csv
+    path: data/manual/yahoo_rankings.csv
+    weight: 0.8
+    description: Yahoo top-300 rankings (manual export)
+
+  - id: subvertadown
+    kind: subvertadown_csv
+    path: data/manual/subvertadown_beersheet.csv
+    weight: 0.0
+    description: Subvertadown BeerSheet (reference VAL/ADP — not blended into VBD)
+
+news:
+  - id: fantasyfootball
+    kind: reddit_rss
+    url: https://www.reddit.com/r/fantasyfootball/.rss
+    limit: 40

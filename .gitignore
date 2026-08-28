@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+
+data/raw/**/*
+!data/raw/.gitkeep
+
+output/
+
+data/processed/
+
+config/service-account.json
+config/sheet_id.txt
+
+data/manual/*.pdf
