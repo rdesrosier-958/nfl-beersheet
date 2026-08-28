@@ -20,7 +20,14 @@ pip install -r requirements.txt
 ./scripts/refresh.sh
 ```
 
-Drop exports into `data/manual/` first — see [docs/updating.md](docs/updating.md).
+Drop exports into `data/manual/` for Subvertadown reference and (optionally) Yahoo if the article won't scrape. Live sources:
+
+| Source | How |
+|--------|-----|
+| ESPN projections | Fetched automatically (`espn_projections` in `config/sources.yaml`) |
+| Rotoballer top-400 | Fetched automatically from the URL in `sources.yaml` |
+| Yahoo top-300 | Auto-fetch when the page renders; otherwise paste into `data/manual/yahoo_rankings.csv` |
+| Subvertadown | `data/manual/subvertadown_beersheet.csv` (reference columns only) |
 
 ## League settings
 
@@ -56,6 +63,32 @@ PYTHONPATH=src python -m nfl init-sheet   # creates sheet, writes config/sheet_i
 ./scripts/refresh.sh                      # build + publish
 ```
 
-Share the new sheet with your Google account (Editor) so it appears in Drive. The service account email is in the JSON key (`client_email`).
+Share the new sheet with your Google account (Editor) so it appears in Drive.
+
+**Manual setup** (if `init-sheet` fails — Drive API not enabled on the GCP project):
+
+1. Create a blank Google Sheet in your Drive (e.g. "NFL Beer Sheet — I'm so excited")
+2. Share it with `beersheet-writer@cff-beersheet.iam.gserviceaccount.com` as **Editor**
+3. Paste the sheet URL into `config/sheet_id.txt`
+4. Run `./scripts/refresh.sh`
 
 Or use an existing sheet: paste its URL into `config/sheet_id.txt` and share that sheet with the service account as Editor.
+
+## Daily automation
+
+Two layers:
+
+| Layer | What it does |
+|-------|----------------|
+| **Local schedule (8 AM)** | `scripts/install-daily-launchd.sh` — fetches ESPN/Rotoballer, rebuilds, publishes sheet |
+| **News + injuries** | Cursor Automation or manual run using `.cursor/skills/update-nfl-beersheet/SKILL.md` — scans r/fantasyfootball, edits `adjustments.csv`, rebuilds |
+
+Install the local daily job:
+
+```bash
+./scripts/install-daily-launchd.sh
+```
+
+Logs: `logs/daily-YYYY-MM-DD.log`
+
+For the **full** daily pass (injuries + adjustments), create a Cursor Automation on a schedule that follows the update skill, or ask in chat: *"update the NFL beer sheet"*.

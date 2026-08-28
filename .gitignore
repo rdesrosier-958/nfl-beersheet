@@ -9,6 +9,8 @@ data/raw/**/*
 
 output/
 
+logs/
+
 data/processed/
 
 config/service-account.json

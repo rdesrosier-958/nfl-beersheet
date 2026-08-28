@@ -1,4 +1,4 @@
-"""Ingest manual CSVs and build scored projections."""
+"""Ingest live sources and manual CSVs, then build scored projections."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import csv
 import pickle
 from pathlib import Path
 
-from . import config, scoring
+from . import config, espn, fetch, parse, scoring
 from .players import Player, Registry, normalise_position
 from .records import Projection
 
@@ -54,58 +54,84 @@ def _norm_header(row: dict[str, str | None]) -> dict[str, str]:
     return out
 
 
-def ingest_projection_csv(path: Path, source_id: str, registry: Registry) -> int:
-    rows = _read_csv(path)
-    count = 0
-    for raw in rows:
-        row = _norm_header(raw)
-        name = row.get("player") or row.get("name")
-        if not name:
-            continue
-        position = row.get("position") or row.get("pos") or ""
-        resolved = normalise_position(position, name)
-        if resolved is None:
-            continue
-        team = row.get("team") or ""
-        games = _float(row.get("games"), 17.0)
-        stats = {col: _float(row.get(col)) for col in STAT_COLUMNS}
-        bye = _int(row.get("bye"))
-
+def ingest_espn(registry: Registry, source_id: str) -> int:
+    season = int(config.settings().get("season", 2026))
+    players = espn.fetch_projections(season=season)
+    for row in players:
         player = registry.add(
-            name=name, team_raw=team, position=resolved,
-            source_id=source_id, rank=count + 1,
+            name=row.name, team_raw=row.team, position=row.position,
+            source_id=source_id, rank=row.rank,
         )
         if player is None:
             continue
-        player.stats = stats
+        player.stats = dict(row.stats)
         player.stat_source = source_id
-        if bye is not None:
-            player.bye = bye
-        count += 1
-    return count
+        player.espn_points = row.espn_points
+    return len(players)
 
 
-def ingest_ranking_csv(path: Path, source_id: str, registry: Registry) -> int:
-    rows = _read_csv(path)
+def ingest_rotoballer(registry: Registry, source_id: str, *, offline: bool = False) -> int:
+    source = next(s for s in config.sources()["sources"] if s["id"] == source_id)
+    fetched = fetch.fetch(source_id, source["url"], offline=offline)
+    if fetched is None:
+        return 0
+    rows = parse.parse_rotoballer_rankings(fetched.html)
+    for row in rows:
+        registry.add(
+            name=row.player, team_raw=row.team_raw, position=row.position,
+            source_id=source_id, rank=row.source_rank,
+        )
+    return len(rows)
+
+
+def ingest_yahoo(registry: Registry, source_id: str, *, offline: bool = False) -> int:
+    pdf_path = config.MANUAL_DIR / "yahoo_top300.pdf"
+    if pdf_path.exists():
+        rows = parse.parse_yahoo_pdf(pdf_path)
+        for row in rows:
+            registry.add_yahoo_rank(
+                short_name=row.player, team_raw=row.team_raw, position=row.position,
+                source_id=source_id, rank=row.source_rank,
+            )
+        return len(rows)
+
+    source = next(s for s in config.sources()["sources"] if s["id"] == source_id)
+    fetched = fetch.fetch(source_id, source["url"], offline=offline)
+    rows: list[parse.RankingRow] = []
+    if fetched is not None:
+        rows = parse.parse_yahoo_rankings(fetched.html)
+
+    if not rows:
+        path = config.MANUAL_DIR / "yahoo_rankings.csv"
+        if path.exists():
+            return _ingest_yahoo_csv(registry, source_id, path)
+        print(f"  ! {source_id}: save PDF to {pdf_path.name} or CSV to yahoo_rankings.csv")
+        return 0
+
+    for row in rows:
+        registry.add_yahoo_rank(
+            short_name=row.player, team_raw=row.team_raw, position=row.position,
+            source_id=source_id, rank=row.source_rank,
+        )
+    return len(rows)
+
+
+def _ingest_yahoo_csv(registry: Registry, source_id: str, path: Path) -> int:
     count = 0
-    for raw in rows:
+    for raw in _read_csv(path):
         row = _norm_header(raw)
         name = row.get("player") or row.get("name")
         if not name:
             continue
-        position = row.get("position") or row.get("pos") or ""
-        rank = _int(row.get("rank") or row.get("overall_rank") or row.get("adp"))
-        if rank is None:
-            count += 1
-            rank = count
-        pos_rank = _int(row.get("pos_rank") or row.get("position_rank"))
-        team = row.get("team") or ""
-        player = registry.add(
-            name=name, team_raw=team, position=position,
-            source_id=source_id, rank=rank, pos_rank=pos_rank,
+        rank = _int(row.get("rank")) or count + 1
+        registry.add(
+            name=name,
+            team_raw=row.get("team") or row.get("yahoo_team") or "",
+            position=row.get("position") or row.get("pos") or "",
+            source_id=source_id,
+            rank=rank,
         )
-        if player is not None:
-            count += 1
+        count += 1
     return count
 
 
@@ -152,7 +178,7 @@ def _index_positional_ranks(registry: Registry) -> None:
     for player in registry.all():
         by_position.setdefault(player.position, []).append(player)
 
-    for position, pool in by_position.items():
+    for pool in by_position.values():
         for source_id in {sid for p in pool for sid in p.source_ranks}:
             ranked = sorted(
                 [p for p in pool if source_id in p.source_ranks],
@@ -180,6 +206,21 @@ def _score_player(player: Player, games: float) -> Projection:
             market_rank=_average_ranks(player.source_overall_ranks),
             market_pos_rank=_average_ranks(player.source_pos_ranks),
             market_sources=len(player.source_pos_ranks) or len(player.source_ranks),
+            subvertadown_val=player.subvertadown_val,
+            subvertadown_adp=player.subvertadown_adp,
+            bye=player.bye,
+        )
+
+    if player.espn_points and player.espn_points > 0:
+        per_game = player.espn_points / max(games, 1.0)
+        return Projection(
+            player=player, position=position, team=player.team, games=games,
+            stats=dict(player.stats), points=player.espn_points, per_game=per_game,
+            components={"espn_projection": player.espn_points},
+            projection_basis=player.stat_source or "espn",
+            market_rank=_average_ranks(player.source_overall_ranks),
+            market_pos_rank=_average_ranks(player.source_pos_ranks),
+            market_sources=len(player.source_pos_ranks),
             subvertadown_val=player.subvertadown_val,
             subvertadown_adp=player.subvertadown_adp,
             bye=player.bye,
@@ -235,28 +276,45 @@ def build(*, offline: bool = False) -> list[Projection]:
 
     registry = Registry()
     loaded: list[str] = []
+    season = int(config.settings().get("season", 2026))
+    default_games = float(config.settings().get("games", 17))
+
     for source in config.sources()["sources"]:
         kind = source["kind"]
-        path = config.ROOT / source["path"]
         source_id = source["id"]
-        if kind == "projection_csv":
-            n = ingest_projection_csv(path, source_id, registry)
-        elif kind == "ranking_csv":
-            n = ingest_ranking_csv(path, source_id, registry)
+        if kind == "espn_projections":
+            n = ingest_espn(registry, source_id)
+            print(f"  {source_id}: {n} projections")
+        elif kind == "rotoballer_ranking":
+            n = ingest_rotoballer(registry, source_id, offline=offline)
+            print(f"  {source_id}: {n} ranked")
+        elif kind == "yahoo_ranking":
+            n = ingest_yahoo(registry, source_id, offline=offline)
+            if n:
+                print(f"  {source_id}: {n} ranked")
         elif kind == "subvertadown_csv":
+            path = config.ROOT / source["path"]
             n = ingest_subvertadown_csv(path, registry)
-        else:
-            continue
-        if n:
-            loaded.append(f"{source_id} ({n})")
+            if n:
+                print(f"  {source_id}: {n} reference rows")
+        if kind != "yahoo_ranking" and kind != "subvertadown_csv":
+            if kind == "espn_projections" or kind == "rotoballer_ranking":
+                loaded.append(f"{source_id}")
 
     _index_positional_ranks(registry)
-    games = float(config.settings().get("games", 17))
-    projections = [_score_player(player, games) for player in registry.all()]
-    projections = [p for p in projections if p.points > 0 or p.market_rank is not None]
-    projections.sort(key=lambda p: -p.points)
+    projections: list[Projection] = []
+    for player in registry.all():
+        if not player.stats and not player.espn_points:
+            continue
+        games = default_games
+        scored = _score_player(player, games)
+        if scored.points > 0:
+            projections.append(scored)
 
+    projections.sort(key=lambda p: -p.points)
+    loaded_summary = config.PROCESSED_DIR / "sources_loaded.txt"
     CACHE.write_bytes(pickle.dumps(projections))
-    stamp = config.PROCESSED_DIR / "sources_loaded.txt"
-    stamp.write_text("\n".join(loaded) if loaded else "no sources found")
+    loaded_summary.write_text(
+        f"players={len(projections)} season={season}\n" + "\n".join(loaded)
+    )
     return projections

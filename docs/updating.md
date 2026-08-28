@@ -10,25 +10,25 @@ League: **I'm so excited, I'm so scared!** (ESPN 487681) — 10 teams, 0.5 PPR, 
 
 Outputs land in `output/beersheet.csv`, `output/beersheet_draftable.csv`, and `output/beersheet.xlsx`.
 
+## Live sources (automatic)
+
+| Source | Role |
+|--------|------|
+| ESPN projections API | Stat backbone → rescored to half-PPR |
+| [Rotoballer top-400](https://www.rotoballer.com/top-400-updated-half-ppr-fantasy-football-rankings-2026/1910000) | Market board |
+| [Yahoo top-300](https://sports.yahoo.com/fantasy/article/fantasy-football-rankings-consensus-top-300-players-160643696.html) | Second market board (see manual fallback below) |
+
+Configured in `config/sources.yaml`. Run `./scripts/refresh.sh` to fetch and rebuild (~600 players).
+
 ## Manual data files
 
-All sources live under `data/manual/`. Re-export from each site and overwrite the CSV.
+Only needed for Subvertadown reference, Yahoo fallback, and news nudges:
 
 | File | Source | Role |
 |------|--------|------|
-| `fantasypros_projections.csv` | [FantasyPros](https://www.fantasypros.com/nfl/projections/) | Stat backbone → VBD |
-| `espn_rankings.csv` | ESPN league rankings | Market board |
-| `yahoo_rankings.csv` | Yahoo rankings | Second market board |
+| `yahoo_top300.pdf` | Yahoo article (Print/Save as PDF) | Market board — drop export in `data/manual/` |
 | `subvertadown_beersheet.csv` | [Subvertadown BeerSheet](https://subvertadown.com) | Reference VAL/ADP columns only |
 | `adjustments.csv` | You / r/fantasyfootball news | % nudges to projections |
-
-### FantasyPros projections format
-
-```csv
-player,team,position,games,bye,pass_yd,pass_td,pass_int,rush_yd,rush_td,rec,rec_yd,rec_td
-```
-
-### Ranking CSV format (ESPN / Yahoo)
 
 ```csv
 rank,player,team,position,pos_rank
