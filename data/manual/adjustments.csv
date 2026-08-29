@@ -1,3 +1,14 @@
-# player,position,adjust_pct,status,note,expires
-# Example: bump a player after camp news. status=OUT zeroes projection.
-# Christian McCaffrey,RB,-15,,"calf strain — monitor",2026-09-01
+player,position,adjust_pct,status,note,expires
+Ashton Jeanty,RB,-8,,low ankle sprain — still on the mend; Raiders counting on him W1; Washington earning committee work,2026-09-20
+Mike Washington Jr.,RB,15,,Jeanty ankle + Kubiak two-back comments; first-team preseason work,2026-09-20
+Josh Jacobs,RB,-15,,misdemeanor charges 8/27; Packers preparing for possible NFL suspension,2026-09-20
+MarShawn Lloyd,RB,15,,Jacobs suspension risk — primary handcuff,2026-09-20
+Chris Brooks,RB,10,,Jacobs suspension risk — committee bump,2026-09-20
+Ja'Marr Chase,WR,-5,,knee hyperextension 8/25; DNP Wed (says he'd play if it were a game),2026-09-14
+Zach Charbonnet,RB,-20,,ACL recovery still on PUP; likely reserve/PUP and misses first 4 games,2026-10-12
+Emanuel Wilson,RB,15,,Charbonnet PUP — early-season committee bump,2026-10-12
+Isiah Pacheco,RB,-10,,new back injury 8/27 (knee not a concern; no timeline),2026-09-14
+Jacory Croskey-Merritt,RB,-10,,lower-body; DNP preseason finale,2026-09-14
+Luther Burden III,WR,-8,,groin; limited to individual drills 8/26,2026-09-14
+Jeremiyah Love,RB,-8,,high-ankle sprain; worked out before finale, chance W1 but not fully cleared,2026-09-20
+Tyler Allgeier,RB,10,,Love high-ankle Week 1 risk — early-down committee,2026-09-20
