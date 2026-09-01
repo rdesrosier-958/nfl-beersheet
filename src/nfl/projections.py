@@ -6,7 +6,7 @@ import csv
 import pickle
 from pathlib import Path
 
-from . import config, espn, fetch, parse, scoring
+from . import bye_weeks, config, espn, fetch, parse, scoring
 from .players import Player, Registry, normalise_position
 from .records import Projection
 
@@ -302,6 +302,11 @@ def build(*, offline: bool = False) -> list[Projection]:
                 loaded.append(f"{source_id}")
 
     _index_positional_ranks(registry)
+    for player in registry.all():
+        team_bye = bye_weeks.for_team(player.team)
+        if team_bye is not None:
+            player.bye = team_bye
+
     projections: list[Projection] = []
     for player in registry.all():
         if not player.stats and not player.espn_points:

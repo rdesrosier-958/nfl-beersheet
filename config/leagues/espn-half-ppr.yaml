@@ -64,6 +64,14 @@ scoring:
 
 model:
   draft_cushion: 1.15
+  # Minimum draftable names per position (× teams) on the Draftable tab.
+  draftable_floor_per_team:
+    QB: 1.75
+    RB: 4.25
+    WR: 4.25
+    TE: 1.75
+    K: 1.25
+    DST: 1.25
   bench_allocation:
     QB: 15
     RB: 25

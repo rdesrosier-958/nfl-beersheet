@@ -34,6 +34,7 @@ Hard requirements:
 3. Edit `data/manual/adjustments.csv` when news should move a projection.
 4. Run `./scripts/refresh_all.sh` — must publish both league tabs to Google Sheets (log must show two sheet URLs).
 5. Report: players adjusted, top-20 changes per league, cache fallbacks, both sheet URLs.
+6. Open/update a PR into `main` and **merge it** (or push adjustments to `main`) so the next daily run starts from current news lines — draft PRs left open leave `main` empty and force every run to rebuild adjustments from scratch.
 
 If Yahoo rankings changed, note that `data/manual/yahoo_top300.pdf` needs a refresh.
 ```

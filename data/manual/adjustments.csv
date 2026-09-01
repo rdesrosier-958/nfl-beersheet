@@ -1,3 +1,15 @@
-# player,position,adjust_pct,status,note,expires
-# Example: bump a player after camp news. status=OUT zeroes projection.
-# Christian McCaffrey,RB,-15,,"calf strain — monitor",2026-09-01
+player,position,adjust_pct,status,note,expires
+Ashton Jeanty,RB,-8,,ankle sprain still no official diagnosis; avoided IR; Raiders counting on him W1,2026-09-20
+Mike Washington Jr.,RB,15,,Jeanty ankle + Kubiak two-back comments; first-team preseason work,2026-09-20
+Josh Jacobs,RB,,OUT,Commissioner's Exempt 8/30 — cannot practice or play; no return date,2026-10-31
+MarShawn Lloyd,RB,25,,Jacobs exempt — likely lead back in GB committee,2026-10-31
+Chris Brooks,RB,15,,Jacobs exempt — pass-pro/committee bump,2026-10-31
+Ja'Marr Chase,WR,-5,,knee hyperextension 8/25; DNP 8/26; no full-practice confirmation since,2026-09-14
+Isiah Pacheco,RB,-10,,back injury (knee not a concern); Campbell no W1 timeline,2026-09-14
+Jacory Croskey-Merritt,RB,-10,,lower-body; DNP preseason finale,2026-09-14
+Jeremiyah Love,RB,-8,,high-ankle sprain; worked out before finale but not fully cleared; Conner on IR,2026-09-20
+Tyler Allgeier,RB,15,,Love high-ankle + Conner IR (DTR 4 games) — early-down committee,2026-09-20
+Keenan Allen,WR,-15,,DWI arrest 8/30; possible 3-game NFL substances-of-abuse suspension (not announced),2026-10-15
+George Kittle,TE,-5,,Achilles; expected to practice this week and has a W1 shot but status still cloudy,2026-09-14
+Emeka Egbuka,WR,-8,,toe sprain since 8/12; Bowles only hopefully W1; still not practicing,2026-09-14
+Jalen McMillan,WR,8,,Bowles expects McMillan W1 while Egbuka is only hopeful,2026-09-14

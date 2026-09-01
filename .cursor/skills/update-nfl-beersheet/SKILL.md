@@ -106,6 +106,13 @@ Sheet ids are in `config/leagues/*.yaml`.
 If no news warranted changes, still rebuild when source data may have moved
 (ESPN/Rotoballer update daily).
 
+## Landing on `main`
+
+Daily runs publish sheets from the working branch, but **`main` must receive the
+adjustments** (merge the daily PR, or push to `main`) so the next automation
+starts from the current `data/manual/adjustments.csv`. Leaving draft PRs open
+leaves `main` empty and forces every run to re-apply news from scratch.
+
 ## Yahoo rankings PDF
 
 Yahoo's article is client-rendered; save it as PDF when rankings change:
